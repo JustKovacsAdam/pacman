@@ -18,7 +18,7 @@ A basic Pac-Man recreation made as a university project.
 | Arrow keys / WASD | Move |
 | Esc / P | Pause / resume |
 | R | Restart (while paused or after game over) |
-| Enter / Space | Play again after game over |
+| Enter / Space | Start from the title screen / play again after game over or win |
 | Q | Quit (while paused or after game over) |
 
 ## Building a playable version
@@ -36,6 +36,13 @@ Linux versions using [GameCI](https://game.ci). Add these repository secrets fir
 
 Then run the **Build game** workflow (Actions tab → Build game → Run workflow) and download the
 builds from the run's *Artifacts* section.
+
+## Title and finish screens
+
+- The game opens on a **title screen** (with your high score). Press Enter or Space to start.
+- Collecting every pellet shows a **"YOU WIN!"** screen with your score and high score;
+  press Enter / Space to play again.
+- Both are built from code (`GameManager.cs` + `Overlay.cs`), so no scene editing is needed.
 
 ## Gameplay fixes
 

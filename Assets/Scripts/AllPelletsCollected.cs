@@ -27,9 +27,9 @@ public class AllPelletsCollected : MonoBehaviour
                 count++;
             }
         }
-        if (count == 0)
+        if (count == 0 && pellets.Count > 0 && GameManager.Instance != null)
         {
-            Debug.Log("Complete");
+            GameManager.Instance.Win();
         }
     }
 }

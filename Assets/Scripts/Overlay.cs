@@ -5,7 +5,7 @@ using UnityEngine.UI;
 // so no extra scene/prefab editing is needed.
 public static class Overlay
 {
-    public static GameObject Show(string title, Color titleColor, string body)
+    public static GameObject Show(string title, Color titleColor, string body, float backgroundAlpha = 0.8f)
     {
         GameObject root = new GameObject("Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
         Canvas canvas = root.GetComponent<Canvas>();
@@ -24,7 +24,7 @@ public static class Overlay
         bgRect.anchorMax = Vector2.one;
         bgRect.offsetMin = Vector2.zero;
         bgRect.offsetMax = Vector2.zero;
-        background.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.8f);
+        background.GetComponent<Image>().color = new Color(0f, 0f, 0f, backgroundAlpha);
 
         AddText(root.transform, "Title", title, 120, titleColor, new Vector2(0, 140));
         AddText(root.transform, "Body", body, 42, Color.white, new Vector2(0, -110));

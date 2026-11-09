@@ -3,9 +3,11 @@ using UnityEngine.SceneManagement;
 
 public enum GameState
 {
+    Title,
     Playing,
     Paused,
-    GameOver
+    GameOver,
+    Won
 }
 
 // Created automatically when the game starts. Handles pausing, game over and restarting,
@@ -18,6 +20,8 @@ public class GameManager : MonoBehaviour
     public GameState State { get; private set; }
 
     GameObject overlay;
+    // when restarting after game over / win, skip the title screen
+    bool skipTitle;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
@@ -37,14 +41,50 @@ public class GameManager : MonoBehaviour
     {
         // overlay belongs to the previous scene and was destroyed with it
         overlay = null;
-        SetPaused(false);
+        if (skipTitle)
+        {
+            skipTitle = false;
+            SetPaused(false);
+            State = GameState.Playing;
+        }
+        else
+        {
+            ShowTitle();
+        }
+    }
+
+    void ShowTitle()
+    {
+        State = GameState.Title;
+        SetPaused(true);
+        string body = "HIGH SCORE " + PlayerPrefs.GetInt(HighScoreKey, 0).ToString("D6") +
+                      "\n\nPress ENTER or SPACE to start" +
+                      "\n\n<size=30>Arrow keys / WASD - move     Esc / P - pause</size>";
+        ShowOverlay("PAC-MAN", Color.yellow, body, 0.92f);
+    }
+
+    public void StartGame()
+    {
         State = GameState.Playing;
+        SetPaused(false);
+        HideOverlay();
     }
 
     void Update()
     {
         switch (State)
         {
+            case GameState.Title:
+                if (StartPressed())
+                {
+                    StartGame();
+                }
+                else if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Q))
+                {
+                    Quit();
+                }
+                break;
+
             case GameState.Playing:
                 if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
                 {
@@ -68,8 +108,8 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.GameOver:
-                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ||
-                    Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.R))
+            case GameState.Won:
+                if (StartPressed() || Input.GetKeyDown(KeyCode.R))
                 {
                     Restart();
                 }
@@ -106,8 +146,21 @@ public class GameManager : MonoBehaviour
         ShowOverlay("GAME OVER", Color.red, ScoreSummary() + "\n\nEnter / Space - play again" + QuitHint());
     }
 
+    public void Win()
+    {
+        if (State != GameState.Playing)
+        {
+            return;
+        }
+        State = GameState.Won;
+        SetPaused(true);
+        ShowOverlay("YOU WIN!", Color.yellow,
+            "All pellets collected!\n\n" + ScoreSummary() + "\n\nEnter / Space - play again" + QuitHint());
+    }
+
     public void Restart()
     {
+        skipTitle = true;
         SetPaused(false);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
@@ -147,6 +200,12 @@ public class GameManager : MonoBehaviour
         return int.TryParse(lines[lines.Length - 1].Trim(), out value) ? value : 0;
     }
 
+    static bool StartPressed()
+    {
+        return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ||
+               Input.GetKeyDown(KeyCode.Space);
+    }
+
     static string QuitHint()
     {
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -156,10 +215,10 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
-    void ShowOverlay(string title, Color color, string body)
+    void ShowOverlay(string title, Color color, string body, float backgroundAlpha = 0.8f)
     {
         HideOverlay();
-        overlay = Overlay.Show(title, color, body);
+        overlay = Overlay.Show(title, color, body, backgroundAlpha);
     }
 
     void HideOverlay()
