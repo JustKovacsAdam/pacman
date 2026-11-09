@@ -44,6 +44,8 @@ public class ResetGhosts : MonoBehaviour
     }
     private void StartSpawning()
     {
+        // cancel spawns still pending from a previous reset, otherwise they pile up
+        StopAllCoroutines();
         for (int i = 1; i < ghostScripts.Length; i++)
         {
             this.Wait(i, Spawn);
@@ -53,6 +55,10 @@ public class ResetGhosts : MonoBehaviour
 
     public void Spawn()
     {
+        if (current >= ghostScripts.Length)
+        {
+            return;
+        }
         ghostScripts[current].gameObject.transform.position = new Vector2(-0.2f, 1);
         ghostScripts[current].mode = Mode.CHASE;
         current++;

@@ -1,0 +1,179 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public enum GameState
+{
+    Playing,
+    Paused,
+    GameOver
+}
+
+// Created automatically when the game starts. Handles pausing, game over and restarting,
+// which previously only existed as Debug.Log messages in the editor.
+public class GameManager : MonoBehaviour
+{
+    const string HighScoreKey = "HighScore";
+
+    public static GameManager Instance { get; private set; }
+    public GameState State { get; private set; }
+
+    GameObject overlay;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Bootstrap()
+    {
+        if (Instance != null)
+        {
+            return;
+        }
+        GameObject go = new GameObject("GameManager");
+        DontDestroyOnLoad(go);
+        Instance = go.AddComponent<GameManager>();
+        Instance.OnSceneStart();
+        SceneManager.sceneLoaded += (scene, mode) => Instance.OnSceneStart();
+    }
+
+    void OnSceneStart()
+    {
+        // overlay belongs to the previous scene and was destroyed with it
+        overlay = null;
+        SetPaused(false);
+        State = GameState.Playing;
+    }
+
+    void Update()
+    {
+        switch (State)
+        {
+            case GameState.Playing:
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+                {
+                    Pause();
+                }
+                break;
+
+            case GameState.Paused:
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+                {
+                    Resume();
+                }
+                else if (Input.GetKeyDown(KeyCode.R))
+                {
+                    Restart();
+                }
+                else if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    Quit();
+                }
+                break;
+
+            case GameState.GameOver:
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ||
+                    Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.R))
+                {
+                    Restart();
+                }
+                else if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Q))
+                {
+                    Quit();
+                }
+                break;
+        }
+    }
+
+    public void Pause()
+    {
+        State = GameState.Paused;
+        SetPaused(true);
+        ShowOverlay("PAUSED", Color.yellow, "Esc / P - resume\nR - restart" + QuitHint());
+    }
+
+    public void Resume()
+    {
+        State = GameState.Playing;
+        SetPaused(false);
+        HideOverlay();
+    }
+
+    public void GameOver()
+    {
+        if (State == GameState.GameOver)
+        {
+            return;
+        }
+        State = GameState.GameOver;
+        SetPaused(true);
+        ShowOverlay("GAME OVER", Color.red, ScoreSummary() + "\n\nEnter / Space - play again" + QuitHint());
+    }
+
+    public void Restart()
+    {
+        SetPaused(false);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void Quit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#elif !UNITY_WEBGL
+        Application.Quit();
+#endif
+    }
+
+    // Returns "SCORE x   HIGH SCORE y" and stores a new high score if needed.
+    string ScoreSummary()
+    {
+        int score = CurrentScore();
+        int best = PlayerPrefs.GetInt(HighScoreKey, 0);
+        if (score > best)
+        {
+            best = score;
+            PlayerPrefs.SetInt(HighScoreKey, best);
+            PlayerPrefs.Save();
+        }
+        return "SCORE " + score.ToString("D6") + "     HIGH SCORE " + best.ToString("D6");
+    }
+
+    public static int CurrentScore()
+    {
+        PlayerScore playerScore = FindObjectOfType<PlayerScore>();
+        if (playerScore == null || playerScore.score == null)
+        {
+            return 0;
+        }
+        string[] lines = playerScore.score.text.Split('\n');
+        int value;
+        return int.TryParse(lines[lines.Length - 1].Trim(), out value) ? value : 0;
+    }
+
+    static string QuitHint()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        return "";
+#else
+        return "\nQ - quit";
+#endif
+    }
+
+    void ShowOverlay(string title, Color color, string body)
+    {
+        HideOverlay();
+        overlay = Overlay.Show(title, color, body);
+    }
+
+    void HideOverlay()
+    {
+        if (overlay != null)
+        {
+            Destroy(overlay);
+            overlay = null;
+        }
+    }
+
+    static void SetPaused(bool paused)
+    {
+        Time.timeScale = paused ? 0f : 1f;
+        AudioListener.pause = paused;
+    }
+}

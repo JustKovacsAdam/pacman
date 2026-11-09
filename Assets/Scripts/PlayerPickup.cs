@@ -57,8 +57,12 @@ public class PlayerPickup : MonoBehaviour
     {
         for (int i = 0; i < ghostScripts.Length; i++)
         {
-            ghostScripts[i].mode = Mode.SCATTER;
-            ghostSprites[i].color = new Color(0, 0, 255);
+            // ghosts still in the house or already eaten are not affected
+            if (ghostScripts[i].mode == Mode.CHASE || ghostScripts[i].mode == Mode.SCATTER)
+            {
+                ghostScripts[i].mode = Mode.SCATTER;
+                ghostSprites[i].color = new Color(0, 0, 1);
+            }
         }
         counter = 5;
         scatterActive = true;

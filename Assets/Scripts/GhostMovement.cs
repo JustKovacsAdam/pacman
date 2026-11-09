@@ -95,21 +95,15 @@ public class GhostMovement : MonoBehaviour
         }
         else if (gameObject.name == "Pink")
         {
-            if (player.transform.rotation.z < 90)
+            // aim a bit ahead of where Pac-Man is facing
+            // (rotation z: 0 = up, 90 = left, 180 = down, 270 = right)
+            int facingIndex = Mathf.RoundToInt(player.transform.eulerAngles.z / 90f) % 4;
+            switch (facingIndex)
             {
-                return player.transform.position + new Vector3(0, 0.8f);
-            }
-            else if(player.transform.rotation.z < 180)
-            {
-                return player.transform.position + new Vector3(0.8f, 0);
-            }
-            else if (player.transform.rotation.z < 270)
-            {
-                return player.transform.position + new Vector3(0, -0.8f);
-            }
-            else
-            {
-                return player.transform.position + new Vector3(-0.8f, 0);
+                case 0: return player.transform.position + new Vector3(0, 0.8f);
+                case 1: return player.transform.position + new Vector3(-0.8f, 0);
+                case 2: return player.transform.position + new Vector3(0, -0.8f);
+                default: return player.transform.position + new Vector3(0.8f, 0);
             }
         }
         else
