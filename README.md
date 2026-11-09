@@ -37,6 +37,21 @@ Linux versions using [GameCI](https://game.ci). Add these repository secrets fir
 Then run the **Build game** workflow (Actions tab → Build game → Run workflow) and download the
 builds from the run's *Artifacts* section.
 
+## Play in the browser (GitHub Pages)
+
+`.github/workflows/pages.yml` builds the WebGL version and publishes it to GitHub Pages at
+`https://<your-username>.github.io/pacman/`.
+
+One-time setup:
+
+1. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
+2. Add the `UNITY_LICENSE`, `UNITY_EMAIL` and `UNITY_PASSWORD` secrets (see above).
+3. Push to `main` (or run **Deploy to GitHub Pages** from the Actions tab on `main`).
+   By default GitHub only lets the default branch deploy to Pages.
+
+WebGL compression is set to *Disabled* in the player settings, because GitHub Pages can't send the
+`Content-Encoding` headers Unity's Brotli/Gzip builds need.
+
 ## Title and finish screens
 
 - The game opens on a **title screen** (with your high score). Press Enter or Space to start.

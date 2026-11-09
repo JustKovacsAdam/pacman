@@ -1,0 +1,81 @@
+name: Deploy to GitHub Pages
+
+# Builds the WebGL version with GameCI and publishes it to GitHub Pages.
+#
+# One-time setup:
+#   1. Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+#   2. Add the UNITY_LICENSE, UNITY_EMAIL and UNITY_PASSWORD repository secrets
+#      (see https://game.ci/docs/github/activation)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Unity license
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "::error::The UNITY_LICENSE secret is not set. See the README for setup steps."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-WebGL-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          buildName: PacMan
+
+      - name: Collect site files
+        run: |
+          index=$(find build/WebGL -name index.html | head -n 1)
+          if [ -z "$index" ]; then
+            echo "::error::index.html not found in the WebGL build"
+            exit 1
+          fi
+          mkdir -p site
+          sudo cp -r "$(dirname "$index")"/. site/
+          sudo chown -R "$(id -u):$(id -g)" site
+          touch site/.nojekyll
+          ls -la site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
