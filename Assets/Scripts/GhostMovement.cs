@@ -91,7 +91,6 @@ public class GhostMovement : MonoBehaviour
         {
             GameObject red = gameObject.transform.parent.GetChild(0).gameObject;
             Vector2 mirror = red.transform.position - player.transform.position;
-            Debug.Log(mirror);
             return mirror;
         }
         else if (gameObject.name == "Pink")

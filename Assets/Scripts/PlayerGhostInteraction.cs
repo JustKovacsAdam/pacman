@@ -23,7 +23,6 @@ public class PlayerGhostInteraction : MonoBehaviour
         sprites[2] = lives.transform.GetChild(2).gameObject;
         for (int i = 0; i < ghosts.transform.childCount; i++)
         {
-            Debug.Log(ghosts.transform.childCount + "|" + i);
             ghostScripts[i] = gameObject.transform.GetChild(i).GetComponent<GhostMovement>();
         }
     }

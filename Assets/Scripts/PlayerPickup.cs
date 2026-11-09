@@ -27,7 +27,6 @@ public class PlayerPickup : MonoBehaviour
     {
         if (scatterActive)
         {
-            Debug.Log(counter + "|");
             if (counter > 0)
             {
                 counter -= Time.deltaTime;
